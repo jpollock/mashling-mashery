@@ -1,11 +1,11 @@
 {
-  "name": "tibco-log",
+  "name": "mashery-log",
   "type": "flogo:activity",
-  "ref": "github.com/TIBCOSoftware/hello/activity/log",
+  "ref": "github.com/jpollock/mashling-mashery/activity/test",
   "version": "0.0.1",
   "title": "Log Message",
   "description": "Simple Log Activity",
-  "homepage": "https://github.com/TIBCOSoftware/flogo-contrib/tree/master/activity/log",
+  "homepage": "https://github.com/jpollock/mashling-mashery/tree/master/activity/test",
   "inputs":[
     {
       "name": "message",
