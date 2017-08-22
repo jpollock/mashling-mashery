@@ -35,10 +35,11 @@ type Cache struct {
 var log = logger.GetLogger("activity-mashery-cache")
 
 const (
-	ivURI         = "uri"
-	ivPathParams  = "pathParams"
-	ivQueryParams = "queryParams"
-	ivParams      = "params"
+	ivRedisAddress = "redisAddress"
+	ivURI          = "uri"
+	ivPathParams   = "pathParams"
+	ivQueryParams  = "queryParams"
+	ivParams       = "params"
 
 	ivContent          = "content"
 	ivApiConfiguration = "apiConfiguration"
@@ -72,8 +73,9 @@ func (a *CacheActivity) Eval(context activity.Context) (done bool, err error) {
 	json.Unmarshal([]byte(apiConfiguration), &c)
 	log.Info(c.Name)
 
+	redisAddress := context.GetInput(ivRedisAddress).(string)
 	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     redisAddress,
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
