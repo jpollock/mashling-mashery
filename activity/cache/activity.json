@@ -8,6 +8,11 @@
   "homepage": "https://github.com/jpollock/mashling-mashery/tree/master/activity/cache",
   "inputs":[
     {
+      "name": "redisAddress",
+      "type": "string",
+      "required": true
+    },
+    {
       "name": "uri",
       "type": "string",
       "required": true
