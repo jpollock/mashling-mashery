@@ -1,22 +1,23 @@
-package cache
+package rest
 
 import (
 	"github.com/TIBCOSoftware/flogo-lib/core/activity"
 )
 
 var jsonMetadata = `{
-  "name": "mashery-cache",
+  "name": "tibco-rest",
   "type": "flogo:activity",
-  "ref": "github.com/jpollock/mashling-mashery/activity/cache",
+  "ref": "github.com/jpollock/mashling-mashery/activity/rest",
   "version": "0.0.1",
-  "title": "Increment Counter",
-  "description": "Simple Global Counter Activity",
-  "homepage": "https://github.com/jpollock/mashling-mashery/tree/master/activity/cache",
+  "title": "Invoke REST Service",
+  "description": "Simple REST Activity",
+  "homepage": "https://github.com/jpollock/mashling-mashery/tree/master/activity/rest",
   "inputs":[
     {
-      "name": "redisAddress",
+      "name": "method",
       "type": "string",
-      "required": true
+      "required": true,
+      "allowed" : ["GET", "POST", "PUT", "PATCH", "DELETE"]
     },
     {
       "name": "uri",
@@ -33,25 +34,22 @@ var jsonMetadata = `{
     },
     {
       "name": "content",
-      "type": "string",
-      "required": false
-    },
-    {
-      "name": "apiConfiguration",
-      "type": "string"
-    }
-  ],
-  "outputs": [
-    {
-      "name": "value",
       "type": "any"
     },
     {
       "name": "foundContent",
-      "type": "boolean"
-    }    
+      "type": "boolean",
+      "value": "false"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "type": "any"
+    }
   ]
-}`
+}
+`
 
 // init create & register activity
 func init() {

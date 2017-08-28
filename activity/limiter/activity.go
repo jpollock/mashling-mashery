@@ -3,13 +3,16 @@ package limiter
 import (
 	"github.com/TIBCOSoftware/flogo-lib/core/activity"
 	"github.com/TIBCOSoftware/flogo-lib/logger"
+	"github.com/go-redis/redis"
+	"strconv"
 )
 
 var log = logger.GetLogger("activity-mashery-limiter")
 
 const (
-	ivCount = "count"
-	ivLimit = "limit"
+	ivCount        = "count"
+	ivLimit        = "limit"
+	ivRedisAddress = "redisAddress"
 
 	ovLimited = "limited"
 )
@@ -34,10 +37,12 @@ func (a *LimiterActivity) Metadata() *activity.Metadata {
 
 // Eval implements api.Activity.Eval - Logs the Message
 func (a *LimiterActivity) Eval(context activity.Context) (done bool, err error) {
-	log.Info("HERE::1")
+	// Get cache
+	//redisAddress := context.GetInput(ivRedisAddress).(string)
+	//cacheClient := getCache(redisAddress)
+
 	count, _ := getIntValue(context, ivCount, 0)
 	limit, _ := getIntValue(context, ivLimit, 0)
-	log.Info("HERE::2")
 	if count > limit {
 		log.Info("HERE::3")
 		context.SetOutput(ovLimited, true)
@@ -64,4 +69,31 @@ func getIntValue(context activity.Context, attrName string, defValue interface{}
 	}
 
 	return val.(int), found
+}
+
+func getCurrentCount(key string, client redis.Client) (int, bool) {
+	val, err := client.Get(key).Result()
+	if err == redis.Nil {
+		return 0, false
+	} else if err != nil {
+		panic(err)
+	} else {
+		intVal, err := strconv.Atoi(val)
+		if err != nil {
+			panic(err)
+		} else {
+			return intVal, true
+		}
+
+	}
+}
+
+func getCache(redisAddress string) *redis.Client {
+	client := redis.NewClient(&redis.Options{
+		Addr:     redisAddress,
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+	return client
+
 }

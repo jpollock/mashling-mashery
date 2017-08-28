@@ -4,27 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/TIBCOSoftware/flogo-lib/core/activity"
+	"github.com/TIBCOSoftware/flogo-lib/core/data"
 	"github.com/TIBCOSoftware/flogo-lib/logger"
+	"github.com/jpollock/mashling-mashery/models"
 	"io/ioutil"
 	"os"
 )
-
-type ApiConfiguration struct {
-	ID              string     `json:"id"`
-	Name            string     `json:"name"`
-	QpsLimitOverall int        `json:"qpsLimitOverall"`
-	Endpoints       []Endpoint `json:"endpoints"`
-}
-
-type Endpoint struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Cache Cache  `json:"cache"`
-}
-
-type Cache struct {
-	CacheTtlOverride int `json:"cacheTtlOverride"`
-}
 
 // log is the default package logger
 var log = logger.GetLogger("activity-mashery-api-configuration")
@@ -55,22 +40,39 @@ func (a *ApiConfigurationActivity) Eval(context activity.Context) (done bool, er
 	filePath := context.GetInput(ivFilePath).(string)
 	apiConfiguration := getApiConfiguration(filePath)
 
+	dt, ok := data.ToTypeEnum("object")
+	if ok {
+		data.GetGlobalScope().AddAttr("apiConfiguration", dt, apiConfiguration)
+	}
+
 	b, err := json.Marshal(apiConfiguration)
 	if err != nil {
 		fmt.Println("error:", err)
 	}
 	context.SetOutput(ovApiConfiguration, string(b))
+
+	eventLogValue, ok := data.GetGlobalScope().GetAttr("eventLog")
+	log.Info(eventLogValue)
+	d := eventLogValue.Value
+	eventLog, ok := d.(models.EventLog)
+	log.Info(eventLog)
+	if ok == false {
+		log.Info(ok)
+	} else {
+		log.Info(eventLog.RequestId)
+	}
+
 	return true, nil
 }
 
-func getApiConfiguration(filePath string) ApiConfiguration {
+func getApiConfiguration(filePath string) models.ApiConfiguration {
 	raw, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)
 	}
 
-	var c ApiConfiguration
+	var c models.ApiConfiguration
 	json.Unmarshal(raw, &c)
 	return c
 }

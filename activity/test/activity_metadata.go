@@ -15,7 +15,7 @@ var jsonMetadata = `{
   "inputs":[
     {
       "name": "message",
-      "type": "string",
+      "type": "object",
       "value": ""
     },
     {
