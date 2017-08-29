@@ -15,7 +15,7 @@ import (
 var log = logger.GetLogger("activity-mashery-api-configuration")
 
 const (
-	ivFilePath         = "filePath"
+	ivServiceJSON         = "serviceJSON"
 	ovApiConfiguration = "apiConfiguration"
 )
 
@@ -37,8 +37,8 @@ func (a *ApiConfigurationActivity) Metadata() *activity.Metadata {
 
 // Eval implements activity.Activity.Eval
 func (a *ApiConfigurationActivity) Eval(context activity.Context) (done bool, err error) {
-	filePath := context.GetInput(ivFilePath).(string)
-	apiConfiguration := getApiConfiguration(filePath)
+	serviceJSON := context.GetInput(ivServiceJSON).(string)
+	apiConfiguration := getApiConfiguration(serviceJSON)
 
 	dt, ok := data.ToTypeEnum("object")
 	if ok {
@@ -65,14 +65,8 @@ func (a *ApiConfigurationActivity) Eval(context activity.Context) (done bool, er
 	return true, nil
 }
 
-func getApiConfiguration(filePath string) models.ApiConfiguration {
-	raw, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(1)
-	}
-
+func getApiConfiguration(serviceJSON string) models.ApiConfiguration {
 	var c models.ApiConfiguration
-	json.Unmarshal(raw, &c)
+	json.Unmarshal(byte[](serviceJSON), &c)
 	return c
 }
