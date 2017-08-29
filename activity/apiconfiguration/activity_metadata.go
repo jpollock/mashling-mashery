@@ -14,7 +14,7 @@ var jsonMetadata = `{
   "homepage": "https://github.com/jpollock/mashling-mashery/tree/master/activity/apiconfiguration",
   "inputs":[
     {
-      "name": "filePath",
+      "name": "serviceJSON",
       "type": "string"
     }
   ],

@@ -29,31 +29,34 @@ func NewActivity(metadata *activity.Metadata) activity.Activity {
 
 // Metadata implements activity.Activity.Metadata
 func (a *ApiConfigurationActivity) Metadata() *activity.Metadata {
-	log.Info(a.metadata)
 	return a.metadata
 }
 
 // Eval implements activity.Activity.Eval
 func (a *ApiConfigurationActivity) Eval(context activity.Context) (done bool, err error) {
-	serviceJSON := context.GetInput(ivServiceJSON).(string)
-	apiConfiguration := getApiConfiguration(serviceJSON)
+	//	serviceJSON := context.GetInput(ivServiceJSON).(string)
+	if context.GetInput(ivServiceJSON) != nil {
+		if serviceJSON := context.GetInput(ivServiceJSON).(string); serviceJSON != "" {
+			apiConfiguration := getApiConfiguration(serviceJSON)
 
-	dt, ok := data.ToTypeEnum("object")
-	if ok {
-		data.GetGlobalScope().AddAttr("apiConfiguration", dt, apiConfiguration)
-	}
+			dt, ok := data.ToTypeEnum("object")
+			if ok {
+				data.GetGlobalScope().AddAttr("apiConfiguration", dt, apiConfiguration)
+			}
 
-	b, err := json.Marshal(apiConfiguration)
-	if err != nil {
-		fmt.Println("error:", err)
+			b, err := json.Marshal(apiConfiguration)
+			if err != nil {
+				fmt.Println("error:", err)
+			}
+			context.SetOutput(ovApiConfiguration, string(b))
+
+		}
+
 	}
-	context.SetOutput(ovApiConfiguration, string(b))
 
 	eventLogValue, ok := data.GetGlobalScope().GetAttr("eventLog")
-	log.Info(eventLogValue)
 	d := eventLogValue.Value
 	eventLog, ok := d.(models.EventLog)
-	log.Info(eventLog)
 	if ok == false {
 		log.Info(ok)
 	} else {

@@ -52,11 +52,17 @@ func (a *LogActivity) Eval(context activity.Context) (done bool, err error) {
 	apiConfiguration, ok := d.(models.ApiConfiguration)
 	activityLog.Info(apiConfiguration)
 
+	var developerConfiguration models.DeveloperConfiguration
 	developerConfigValue, ok := data.GetGlobalScope().GetAttr("developerConfiguration")
-	activityLog.Info(ok)
-	d3 := developerConfigValue.Value
-	developerConfiguration, ok := d3.(models.DeveloperConfiguration)
-	activityLog.Info(developerConfiguration)
+	if ok {
+		d3 := developerConfigValue.Value
+		developerConfiguration, ok = d3.(models.DeveloperConfiguration)
+		activityLog.Info(developerConfiguration)
+
+	} else {
+		developerConfiguration = new(models.DeveloperConfiguration)
+		developerConfiguration.ApiKey = "unknown"
+	}
 
 	eventLogValue, ok := data.GetGlobalScope().GetAttr("eventLog")
 	d2 := eventLogValue.Value
@@ -64,14 +70,14 @@ func (a *LogActivity) Eval(context activity.Context) (done bool, err error) {
 	eventLog.ExecTimeEnd = time.Now()
 	activityLog.Info(eventLog)
 
-	message, _ := context.GetInput(ivMessage).(models.DeveloperConfiguration)
-	activityLog.Info(message)
+	//	message, _ := context.GetInput(ivMessage).(models.DeveloperConfiguration)
+	//	activityLog.Info(message)
 
 	flowInfo, _ := toBool(context.GetInput(ivFlowInfo))
 
-	msg := message.ApiKey
+	//	msg := message.ApiKey
 
-	msg = eventLogToString(eventLog, apiConfiguration, developerConfiguration)
+	msg := eventLogToString(eventLog, apiConfiguration, developerConfiguration)
 
 	//- - - - [12/Jun/2012:21:53:03 +0000] "GET - HTTP/1.1" 0 200 "-" "-" 0_u2cbu87r6f2q3m66j6yc2uce_ ygnj8v68nqb76akfzetwb799 "-" "-" "-" 0 - 0 0 0 0 -
 

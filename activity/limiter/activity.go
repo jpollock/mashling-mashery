@@ -10,9 +10,10 @@ import (
 var log = logger.GetLogger("activity-mashery-limiter")
 
 const (
-	ivCount        = "count"
-	ivLimit        = "limit"
-	ivRedisAddress = "redisAddress"
+	ivActivityEnabled = "activityEnabled"
+	ivCount           = "count"
+	ivLimit           = "limit"
+	ivRedisAddress    = "redisAddress"
 
 	ovLimited = "limited"
 )
@@ -40,14 +41,21 @@ func (a *LimiterActivity) Eval(context activity.Context) (done bool, err error) 
 	// Get cache
 	//redisAddress := context.GetInput(ivRedisAddress).(string)
 	//cacheClient := getCache(redisAddress)
+	activityEnabled := false
+
+	if context.GetInput(ivActivityEnabled) != nil {
+		activityEnabled = context.GetInput(ivActivityEnabled).(bool)
+	}
+
+	if activityEnabled == false {
+		return true, nil
+	}
 
 	count, _ := getIntValue(context, ivCount, 0)
 	limit, _ := getIntValue(context, ivLimit, 0)
 	if count > limit {
-		log.Info("HERE::3")
 		context.SetOutput(ovLimited, true)
 	} else {
-		log.Info("HERE::4")
 		context.SetOutput(ovLimited, false)
 	}
 

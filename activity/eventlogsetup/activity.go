@@ -5,7 +5,6 @@ import (
 	"github.com/TIBCOSoftware/flogo-lib/core/data"
 	"github.com/TIBCOSoftware/flogo-lib/logger"
 	"github.com/jpollock/mashling-mashery/models"
-	"reflect"
 	"time"
 )
 
@@ -51,7 +50,6 @@ func (a *EventLogActivity) Eval(context activity.Context) (done bool, err error)
 	eventLog.ReferenceGuid = "-"
 	eventLog.ExecTimeStart = time.Now()
 
-	log.Info(eventLog)
 	dt, ok := data.ToTypeEnum("object")
 	log.Info(ok)
 	if ok {
@@ -59,12 +57,9 @@ func (a *EventLogActivity) Eval(context activity.Context) (done bool, err error)
 	}
 
 	eventLogValue, ok := data.GetGlobalScope().GetAttr("eventLog")
-	log.Info(eventLogValue)
 
 	d := eventLogValue.Value
-	log.Info(reflect.TypeOf(d))
 	eventLog2, ok := d.(*models.EventLog)
-	log.Info(eventLog2)
 	if ok == false {
 		log.Info(ok)
 	} else {

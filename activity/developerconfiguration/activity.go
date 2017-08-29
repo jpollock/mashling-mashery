@@ -16,11 +16,12 @@ import (
 var log = logger.GetLogger("activity-mashery-developer-configuration")
 
 const (
-	ivURI          = "uri"
-	ivPathParams   = "pathParams"
-	ivQueryParams  = "queryParams"
-	ivContent      = "content"
-	ivRedisAddress = "redisAddress"
+	ivActivityEnabled = "activityEnabled"
+	ivURI             = "uri"
+	ivPathParams      = "pathParams"
+	ivQueryParams     = "queryParams"
+	ivContent         = "content"
+	ivRedisAddress    = "redisAddress"
 
 	ovDeveloperConfiguration = "developerConfiguration"
 )
@@ -42,6 +43,14 @@ func (a *DeveloperConfigurationActivity) Metadata() *activity.Metadata {
 
 // Eval implements activity.Activity.Eval
 func (a *DeveloperConfigurationActivity) Eval(context activity.Context) (done bool, err error) {
+	activityEnabled := false
+	if context.GetInput(ivActivityEnabled) != nil {
+		activityEnabled = context.GetInput(ivActivityEnabled).(bool)
+	}
+	if activityEnabled == false {
+		return true, nil
+	}
+
 	apiConfigValue, ok := data.GetGlobalScope().GetAttr("apiConfiguration")
 	d := apiConfigValue.Value
 	apiConfiguration, ok := d.(models.ApiConfiguration)
@@ -65,16 +74,6 @@ func (a *DeveloperConfigurationActivity) Eval(context activity.Context) (done bo
 		return found, nil
 
 	}
-
-	/*	developerConfiguration := new(DeveloperConfiguration)
-		developerConfiguration.ApiKey = "test"
-		log.Info(developerConfiguration)
-		context.SetOutput(ovDeveloperConfiguration, developerConfiguration)
-		dt, ok := data.ToTypeEnum("object")
-		if ok {
-			data.GetGlobalScope().AddAttr(uri, dt, developerConfiguration)
-		}
-	*/
 	return true, nil
 }
 

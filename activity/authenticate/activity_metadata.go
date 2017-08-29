@@ -13,7 +13,11 @@ var jsonMetadata = `{
   "description": "Simple Global Counter Activity",
   "homepage": "https://github.com/jpollock/mashling-mashery/tree/master/activity/authenticate",
   "inputs":[
-
+    {
+      "name": "activityEnabled",
+      "type": "boolean",
+      "value": false
+    }
   ],
   "outputs": [
     {

@@ -14,6 +14,11 @@ var jsonMetadata = `{
   "homepage": "https://github.com/jpollock/mashling-mashery/tree/master/activity/cache",
   "inputs":[
     {
+      "name": "activityEnabled",
+      "type": "boolean",
+      "value": false
+    },
+    {
       "name": "redisAddress",
       "type": "string",
       "required": true

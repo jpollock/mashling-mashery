@@ -1,5 +1,5 @@
 {
-  "name": "mashery-log",
+  "name": "mashery-developer-configuration",
   "type": "flogo:activity",
   "ref": "github.com/jpollock/mashling-mashery/activity/developerconfiguration",
   "version": "0.0.1",
@@ -7,6 +7,11 @@
   "description": "Simple Log Activity",
   "homepage": "https://github.com/jpollock/mashling-mashery/tree/master/activity/developerconfiguration",
   "inputs":[
+    {
+      "name": "activityEnabled",
+      "type": "boolean",
+      "value": false
+    },
     {
       "name": "redisAddress",
       "type": "string",
@@ -26,9 +31,5 @@
     }
   ],
   "outputs": [
-    {
-      "name": "developerConfiguration",
-      "type": "object"
-    }
   ]
 }

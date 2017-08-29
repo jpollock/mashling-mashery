@@ -35,11 +35,12 @@ type Cache struct {
 var log = logger.GetLogger("activity-mashery-cache")
 
 const (
-	ivRedisAddress = "redisAddress"
-	ivURI          = "uri"
-	ivPathParams   = "pathParams"
-	ivQueryParams  = "queryParams"
-	ivParams       = "params"
+	ivActivityEnabled = "activityEnabled"
+	ivRedisAddress    = "redisAddress"
+	ivURI             = "uri"
+	ivPathParams      = "pathParams"
+	ivQueryParams     = "queryParams"
+	ivParams          = "params"
 
 	ivContent          = "content"
 	ivApiConfiguration = "apiConfiguration"
@@ -68,10 +69,19 @@ func (a *CacheActivity) Metadata() *activity.Metadata {
 // Eval implements activity.Activity.Eval
 func (a *CacheActivity) Eval(context activity.Context) (done bool, err error) {
 
+	activityEnabled := false
+
+	if context.GetInput(ivActivityEnabled) != nil {
+		activityEnabled = context.GetInput(ivActivityEnabled).(bool)
+	}
+
+	if activityEnabled == false {
+		return true, nil
+	}
+
 	apiConfiguration := context.GetInput(ivApiConfiguration).(string)
 	var c ApiConfiguration
 	json.Unmarshal([]byte(apiConfiguration), &c)
-	log.Info(c.Name)
 
 	redisAddress := context.GetInput(ivRedisAddress).(string)
 	client := redis.NewClient(&redis.Options{
@@ -79,11 +89,6 @@ func (a *CacheActivity) Eval(context activity.Context) (done bool, err error) {
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
-
-	pong, err := client.Ping().Result()
-	fmt.Println(pong, err)
-
-	log.Info("CACHE::1")
 
 	uri := context.GetInput(ivURI).(string)
 
@@ -118,23 +123,16 @@ func (a *CacheActivity) Eval(context activity.Context) (done bool, err error) {
 		uri = uri + "?" + qp.Encode()
 	}
 
-	fmt.Printf("URI= %s\n", uri)
 	content := context.GetInput(ivContent).(string)
-	log.Info("CACHE::2")
-	log.Info(len(content))
 	if content != "" {
-		log.Info("CACHE::ee")
-
 		//fmt.Print(*time.Second) /
 		err := client.Set(uri, content, time.Duration(c.Endpoints[0].Cache.CacheTtlOverride)*time.Second).Err()
 		if err != nil {
-			log.Info("CACHE::weeoe")
 			panic(err)
 		}
 		context.SetOutput(ovFoundContent, false)
 
 	} else {
-		log.Info("CACHE::4")
 		val2, err := client.Get(uri).Result()
 		if err == redis.Nil {
 			fmt.Println("key2 does not exists")
@@ -142,7 +140,6 @@ func (a *CacheActivity) Eval(context activity.Context) (done bool, err error) {
 		} else if err != nil {
 			panic(err)
 		} else {
-			fmt.Println("key2", val2)
 			content = val2
 			var result interface{}
 
@@ -152,15 +149,12 @@ func (a *CacheActivity) Eval(context activity.Context) (done bool, err error) {
 
 			//json.Unmarshal(respBody, &result)
 
-			log.Debug("response Body:", result)
-
 			context.SetOutput(ovValue, result)
 
 			context.SetOutput(ovFoundContent, true)
 
 		}
 	}
-	log.Info("CACHE::6")
 	//context.SetOutput(ovValue, content)
 
 	return true, nil

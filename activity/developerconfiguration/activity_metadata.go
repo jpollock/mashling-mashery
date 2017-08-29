@@ -5,7 +5,7 @@ import (
 )
 
 var jsonMetadata = `{
-  "name": "mashery-log",
+  "name": "mashery-developer-configuration",
   "type": "flogo:activity",
   "ref": "github.com/jpollock/mashling-mashery/activity/developerconfiguration",
   "version": "0.0.1",
@@ -13,6 +13,11 @@ var jsonMetadata = `{
   "description": "Simple Log Activity",
   "homepage": "https://github.com/jpollock/mashling-mashery/tree/master/activity/developerconfiguration",
   "inputs":[
+    {
+      "name": "activityEnabled",
+      "type": "boolean",
+      "value": false
+    },
     {
       "name": "redisAddress",
       "type": "string",
@@ -32,10 +37,6 @@ var jsonMetadata = `{
     }
   ],
   "outputs": [
-    {
-      "name": "developerConfiguration",
-      "type": "object"
-    }
   ]
 }
 `

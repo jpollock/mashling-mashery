@@ -9,7 +9,8 @@ import (
 var log = logger.GetLogger("activity-mashery-developer-configuration")
 
 const (
-	ovAuthenticated = "authenticated"
+	ivActivityEnabled = "activityEnabled"
+	ovAuthenticated   = "authenticated"
 )
 
 // CacheActivity is a Cache Activity implementation
@@ -29,8 +30,18 @@ func (a *AuthenticateActivity) Metadata() *activity.Metadata {
 
 // Eval implements activity.Activity.Eval
 func (a *AuthenticateActivity) Eval(context activity.Context) (done bool, err error) {
-	log.Info("asdasdasasdasdasdasdasdd")
+
+	activityEnabled := false
+
+	if context.GetInput(ivActivityEnabled) != nil {
+		activityEnabled = context.GetInput(ivActivityEnabled).(bool)
+	}
+
 	context.SetOutput(ovAuthenticated, true)
+
+	if activityEnabled == false {
+		return true, nil
+	}
 
 	return true, nil
 

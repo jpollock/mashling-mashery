@@ -14,6 +14,11 @@ var jsonMetadata = `{
   "homepage": "https://github.com/jpollock/mashling-mashery/tree/master/activity/limiter",
   "inputs":[
     {
+      "name": "activityEnabled",
+      "type": "boolean",
+      "value": false
+    },
+    {
       "name": "count",
       "type": "integer",
       "value": "10"

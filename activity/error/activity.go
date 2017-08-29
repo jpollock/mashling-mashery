@@ -38,7 +38,6 @@ func (a *ErrorActivity) Eval(context activity.Context) (done bool, err error) {
 	status, _ := context.GetInput(ivStatus).(string)
 	message, _ := context.GetInput(ivMessage).(string)
 	*/
-	log.Info("ERROR::1")
 
 	replyHandler := context.FlowDetails().ReplyHandler()
 
