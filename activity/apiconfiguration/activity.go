@@ -7,15 +7,13 @@ import (
 	"github.com/TIBCOSoftware/flogo-lib/core/data"
 	"github.com/TIBCOSoftware/flogo-lib/logger"
 	"github.com/jpollock/mashling-mashery/models"
-	"io/ioutil"
-	"os"
 )
 
 // log is the default package logger
 var log = logger.GetLogger("activity-mashery-api-configuration")
 
 const (
-	ivServiceJSON         = "serviceJSON"
+	ivServiceJSON      = "serviceJSON"
 	ovApiConfiguration = "apiConfiguration"
 )
 
@@ -67,6 +65,6 @@ func (a *ApiConfigurationActivity) Eval(context activity.Context) (done bool, er
 
 func getApiConfiguration(serviceJSON string) models.ApiConfiguration {
 	var c models.ApiConfiguration
-	json.Unmarshal(byte[](serviceJSON), &c)
+	json.Unmarshal([]byte(serviceJSON), &c)
 	return c
 }
