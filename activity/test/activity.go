@@ -60,7 +60,8 @@ func (a *LogActivity) Eval(context activity.Context) (done bool, err error) {
 		activityLog.Info(developerConfiguration)
 
 	} else {
-		developerConfiguration = new(models.DeveloperConfiguration)
+		developerConfiguration2 := new(models.DeveloperConfiguration)
+		developerConfiguration = *developerConfiguration2 // I have no idea what i'm doing in golang!
 		developerConfiguration.ApiKey = "unknown"
 	}
 
