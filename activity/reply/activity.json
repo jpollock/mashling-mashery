@@ -1,0 +1,17 @@
+{
+  "name": "mashery-reply",
+  "type": "flogo:activity",
+  "ref": "github.com/jpollock/mashling-mashery/activity/reply",
+  "version": "0.0.1",
+  "title": "Reply To Trigger",
+  "description": "Simple Reply Activity",
+  "homepage": "https://github.com/jpollock/mashling-mashery/tree/master/activity/reply",
+  "inputs":[
+    {
+      "name": "data",
+      "type": "any"
+    }
+  ],
+  "outputs": [
+  ]
+}

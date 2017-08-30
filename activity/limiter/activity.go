@@ -42,7 +42,7 @@ func (a *LimiterActivity) Eval(context activity.Context) (done bool, err error) 
 	//redisAddress := context.GetInput(ivRedisAddress).(string)
 	//cacheClient := getCache(redisAddress)
 	activityEnabled := false
-
+	log.Info("limiter")
 	if context.GetInput(ivActivityEnabled) != nil {
 		activityEnabled = context.GetInput(ivActivityEnabled).(bool)
 	}

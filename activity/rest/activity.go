@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -142,6 +141,7 @@ func (a *RESTActivity) Eval(context activity.Context) (done bool, err error) {
 		reqBody = nil
 	}
 
+	log.Info(uri)
 	req, err := http.NewRequest(method, uri, reqBody)
 	if reqBody != nil {
 		req.Header.Set("Content-Type", contentType)
@@ -154,7 +154,7 @@ func (a *RESTActivity) Eval(context activity.Context) (done bool, err error) {
 	if err != nil {
 		panic(err)
 	}
-	defer resp.Body.Close()
+	/*defer resp.Body.Close()
 
 	log.Info("response Status:", resp.Status)
 	respBody, _ := ioutil.ReadAll(resp.Body)
@@ -168,8 +168,8 @@ func (a *RESTActivity) Eval(context activity.Context) (done bool, err error) {
 	//json.Unmarshal(respBody, &result)
 
 	log.Debug("response Body:", result)
-
-	context.SetOutput(ovResult, result)
+	*/
+	context.SetOutput(ovResult, resp)
 
 	eventLog.RemoteTotalTimeEnd = time.Now()
 

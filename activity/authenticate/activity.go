@@ -6,7 +6,7 @@ import (
 )
 
 // log is the default package logger
-var log = logger.GetLogger("activity-mashery-developer-configuration")
+var log = logger.GetLogger("activity-mashery-authenticate")
 
 const (
 	ivActivityEnabled = "activityEnabled"
@@ -38,7 +38,6 @@ func (a *AuthenticateActivity) Eval(context activity.Context) (done bool, err er
 	}
 
 	context.SetOutput(ovAuthenticated, true)
-
 	if activityEnabled == false {
 		return true, nil
 	}

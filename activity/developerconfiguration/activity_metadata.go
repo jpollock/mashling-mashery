@@ -15,8 +15,7 @@ var jsonMetadata = `{
   "inputs":[
     {
       "name": "activityEnabled",
-      "type": "boolean",
-      "value": false
+      "type": "boolean"
     },
     {
       "name": "redisAddress",
@@ -37,6 +36,14 @@ var jsonMetadata = `{
     }
   ],
   "outputs": [
+    {
+      "name": "error",
+      "type": "boolean"
+    },
+    {
+      "name": "errorData",
+      "type": "any"
+    }
   ]
 }
 `

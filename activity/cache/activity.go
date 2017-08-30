@@ -68,7 +68,7 @@ func (a *CacheActivity) Metadata() *activity.Metadata {
 
 // Eval implements activity.Activity.Eval
 func (a *CacheActivity) Eval(context activity.Context) (done bool, err error) {
-
+	var result interface{}
 	activityEnabled := false
 
 	if context.GetInput(ivActivityEnabled) != nil {
@@ -76,6 +76,8 @@ func (a *CacheActivity) Eval(context activity.Context) (done bool, err error) {
 	}
 
 	if activityEnabled == false {
+		context.SetOutput(ovFoundContent, false)
+		context.SetOutput(ovValue, result)
 		return true, nil
 	}
 
@@ -141,7 +143,6 @@ func (a *CacheActivity) Eval(context activity.Context) (done bool, err error) {
 			panic(err)
 		} else {
 			content = val2
-			var result interface{}
 
 			d := json.NewDecoder(bytes.NewReader([]byte(content)))
 			d.UseNumber()

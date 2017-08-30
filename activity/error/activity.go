@@ -2,7 +2,10 @@ package error
 
 import (
 	"github.com/TIBCOSoftware/flogo-lib/core/activity"
+	"github.com/TIBCOSoftware/flogo-lib/core/data"
 	"github.com/TIBCOSoftware/flogo-lib/logger"
+	"reflect"
+	"strconv"
 )
 
 var log = logger.GetLogger("activity-mashery-error")
@@ -39,12 +42,26 @@ func (a *ErrorActivity) Eval(context activity.Context) (done bool, err error) {
 	message, _ := context.GetInput(ivMessage).(string)
 	*/
 
+	errorDataValue, ok := data.GetGlobalScope().GetAttr("error")
+	log.Info(errorDataValue)
+	d := errorDataValue.Value
+	log.Info(reflect.TypeOf(d))
+	errorData, ok := d.(*activity.Error)
+
+	if ok == false {
+		log.Info(ok)
+	}
+
 	replyHandler := context.FlowDetails().ReplyHandler()
 
 	//todo support replying with error
 
 	if replyHandler != nil {
-		replyHandler.Reply(403, "ERROR!!!!!!!!!", nil)
+
+		if code, err := strconv.Atoi(errorData.Code()); err == nil {
+			replyHandler.Reply(code, errorData.Error(), nil)
+		}
+
 	}
 
 	return true, nil

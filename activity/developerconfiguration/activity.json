@@ -9,8 +9,7 @@
   "inputs":[
     {
       "name": "activityEnabled",
-      "type": "boolean",
-      "value": false
+      "type": "boolean"
     },
     {
       "name": "redisAddress",
@@ -31,5 +30,13 @@
     }
   ],
   "outputs": [
+    {
+      "name": "error",
+      "type": "boolean"
+    },
+    {
+      "name": "errorData",
+      "type": "any"
+    }
   ]
 }

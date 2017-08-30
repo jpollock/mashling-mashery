@@ -9,7 +9,6 @@ import (
 	"github.com/TIBCOSoftware/flogo-lib/logger"
 	"github.com/go-redis/redis"
 	"github.com/jpollock/mashling-mashery/models"
-	"unsafe"
 )
 
 // log is the default package logger
@@ -23,7 +22,8 @@ const (
 	ivContent         = "content"
 	ivRedisAddress    = "redisAddress"
 
-	ovDeveloperConfiguration = "developerConfiguration"
+	ovError     = "error"
+	ovErrorData = "errorData"
 )
 
 // CacheActivity is a Cache Activity implementation
@@ -48,33 +48,57 @@ func (a *DeveloperConfigurationActivity) Eval(context activity.Context) (done bo
 		activityEnabled = context.GetInput(ivActivityEnabled).(bool)
 	}
 	if activityEnabled == false {
+		log.Info("Not enabled")
+		context.SetOutput(ovError, false)
+		context.SetOutput(ovErrorData, nil)
 		return true, nil
 	}
 
 	apiConfigValue, ok := data.GetGlobalScope().GetAttr("apiConfiguration")
+	log.Info(apiConfigValue)
 	d := apiConfigValue.Value
 	apiConfiguration, ok := d.(models.ApiConfiguration)
 
 	if ok == false {
 		log.Info(ok)
 	}
-	log.Info(apiConfiguration)
 
+	var developerConfiguration models.DeveloperConfiguration
+	found := false
 	if context.GetInput(ivQueryParams) != nil {
 		queryParams := context.GetInput(ivQueryParams).(map[string]string)
-		developerConfiguration, found := GetDeveloperConfiguration(context, queryParams, apiConfiguration)
-		if unsafe.Sizeof(developerConfiguration) > 0 {
+		developerConfiguration, found = GetDeveloperConfiguration(context, queryParams, apiConfiguration)
+		if (developerConfiguration != models.DeveloperConfiguration{}) {
+			found = true
 			dt, ok := data.ToTypeEnum("object")
 			if ok {
 				data.GetGlobalScope().AddAttr("developerConfiguration", dt, developerConfiguration)
 			}
 
 		}
+	}
+	log.Info(found)
+	if found == false {
+		log.Info("Not found")
+		context.SetOutput(ovError, true)
+		errorData := activity.NewError("test", "403", nil)
+		log.Info(errorData.Code())
+		//errorData.errorStr = "test"
+		//Error{errorStr: errorText, errorData: errorData, errorCode: code}
+		dt, ok := data.ToTypeEnum("object")
+		if ok {
+			log.Info("Adding error to global")
+			data.GetGlobalScope().AddAttr("error", dt, errorData)
+		}
 
-		return found, nil
+	} else {
+		context.SetOutput(ovError, false)
+		context.SetOutput(ovErrorData, nil)
 
 	}
+
 	return true, nil
+
 }
 
 func GetDeveloperConfiguration(context activity.Context, queryParams map[string]string, apiConfiguration models.ApiConfiguration) (developerConfiguration models.DeveloperConfiguration, found bool) {
