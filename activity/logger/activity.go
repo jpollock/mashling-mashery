@@ -2,12 +2,16 @@ package test
 
 import (
 	"bytes"
+
+	//	"encoding/json"
 	"fmt"
 	"github.com/TIBCOSoftware/flogo-lib/core/activity"
 	"github.com/TIBCOSoftware/flogo-lib/core/data"
 	"github.com/TIBCOSoftware/flogo-lib/logger"
 	"github.com/jpollock/mashling-mashery/models"
+	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -15,9 +19,9 @@ import (
 var activityLog = logger.GetLogger("activity-tibco-log-2")
 
 const (
-	ivMessage   = "message"
-	ivFlowInfo  = "flowInfo"
-	ivAddToFlow = "addToFlow"
+	ivHost = "fluentdHost"
+	ivPort = "fluentdPort"
+	ivTag  = "fluentdTag"
 
 	ovMessage = "message"
 )
@@ -45,69 +49,106 @@ func (a *LogActivity) Metadata() *activity.Metadata {
 
 // Eval implements api.Activity.Eval - Logs the Message
 func (a *LogActivity) Eval(context activity.Context) (done bool, err error) {
+
+	/*fluentdHost := context.GetInput(ivHost).(string)
+	fluentdPort := context.GetInput(ivPort).(string)
+	fluentdTag := context.GetInput(ivTag).(string)*/
+
 	//mv := context.GetInput(ivMessage)
 	apiConfigValue, ok := data.GetGlobalScope().GetAttr("apiConfiguration")
-	activityLog.Info(ok)
 	d := apiConfigValue.Value
 	apiConfiguration, ok := d.(models.ApiConfiguration)
-	activityLog.Info(apiConfiguration)
 
 	var developerConfiguration models.DeveloperConfiguration
 	developerConfigValue, ok := data.GetGlobalScope().GetAttr("developerConfiguration")
-	activityLog.Info(ok)
 	if ok {
 		d3 := developerConfigValue.Value
 		developerConfiguration, ok = d3.(models.DeveloperConfiguration)
-		activityLog.Info(developerConfiguration)
 
 	} else {
 		developerConfiguration2 := new(models.DeveloperConfiguration)
 		developerConfiguration = *developerConfiguration2 // I have no idea what i'm doing in golang!
 		developerConfiguration.ApiKey = "unknown"
 	}
-	activityLog.Info("here")
 	eventLogValue, ok := data.GetGlobalScope().GetAttr("eventLog")
-	activityLog.Info(eventLogValue.Value)
-	//d2 := eventLogValue.Value
-	eventLog, ok := eventLogValue.Value.(models.EventLog)
-	activityLog.Info(ok)
-	activityLog.Info(eventLog)
-	eventLog.ExecTimeEnd = time.Now()
-	activityLog.Info(eventLog)
+	d = eventLogValue.Value
+	eventLog, ok := d.(*models.EventLog)
 
-	//	message, _ := context.GetInput(ivMessage).(models.DeveloperConfiguration)
-	//	activityLog.Info(message)
-
-	flowInfo, _ := toBool(context.GetInput(ivFlowInfo))
-
-	//	msg := message.ApiKey
+	eventLog.ExecTimeEnd = time.Now().UTC()
+	eventLog.LogTimestamp = time.Now().UTC()
 
 	msg := eventLogToString(eventLog, apiConfiguration, developerConfiguration)
 
 	//- - - - [12/Jun/2012:21:53:03 +0000] "GET - HTTP/1.1" 0 200 "-" "-" 0_u2cbu87r6f2q3m66j6yc2uce_ ygnj8v68nqb76akfzetwb799 "-" "-" "-" 0 - 0 0 0 0 -
 
-	if flowInfo {
-
-		//msg = fmt.Sprintf("'%s' - FlowInstanceID  HEY [%s], Flow [%s], Task [%s]", msg,
-		//	context.FlowDetails().ID(), context.FlowDetails().Name(), context.TaskName())
-	}
-
-	activityLog.Info(msg)
-
 	context.SetOutput(ovMessage, msg)
 
+	var netClient = &http.Client{
+		Timeout: time.Second * 10,
+	}
+
+	var jsonStr = []byte("{\"message\":\"" + msg + "\"}")
+	netClient.Post("http://localhost:8888/local.ddd", "application/json", bytes.NewBuffer(jsonStr))
+	//response, _ := netClient.PostForm("http://localhost:8888/local.ddd", url.Values{"message": []string("Test")})
+
+	/*
+	   	    try:
+	           message_json = json.loads(message)
+	           event = {}
+	           event['sourcetype'] = "mysourcetype"
+	           event['event'] = message_json
+	           headers = {"Authorization": "Splunk 0EB426FE-51D5-4C6E-9AA4-5C15222A522F"}
+	           #print json.dumps(event)
+	           response = requests.post('http://127.0.0.1:8088/services/collector', headers=headers, data=json.dumps(event))
+	           #print response.status
+	       except Exception:
+	           return
+	*/
+	/*splunkEvent := new(models.SplunkEvent)
+	splunkEvent.SourceType = "mysourcetype"
+	activityLog.Info(splunkEvent)
+	splunkEvent.Event = eventLog
+
+	data, err := json.Marshal(splunkEvent)
+	if err != nil {
+		activityLog.Error(err)
+	}
+
+	activityLog.Info(string(data))
+
+	//netClient.Post("http://127.0.0.1:8088/services/collector", "application/json", bytes.NewBuffer(data))
+
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", "http://127.0.0.1:8088/services/collector", bytes.NewReader(data))
+	req.Header.Add("Authorization", "Splunk 0EB426FE-51D5-4C6E-9AA4-5C15222A522F")
+	client.Do(req)*/
+	//defer resp.Body.Close()
 	return true, nil
 }
 
-func eventLogToString(eventLog models.EventLog, apiConfiguration models.ApiConfiguration, developerConfiguration models.DeveloperConfiguration) string {
+func eventLogToString(eventLog *models.EventLog, apiConfiguration models.ApiConfiguration, developerConfiguration models.DeveloperConfiguration) string {
 	activityLog.Info(eventLog)
-	byteSize := "0"
-	//bytes = strconv.FormatUint(eventLog.Bytes, 10)
+	//byteSize := "0"
+	byteSize := strconv.FormatInt(eventLog.Bytes, 10)
 
 	execTime := "0"
+	activityLog.Info("timestart")
+	activityLog.Info(eventLog.ExecTimeStart)
+	activityLog.Info("timeend")
+	activityLog.Info(eventLog.ExecTimeEnd)
+
+	diff := eventLog.ExecTimeEnd.Sub(eventLog.ExecTimeStart)
+	execTime = strconv.FormatFloat(diff.Seconds(), 'f', -1, 64)
 	//execTime = strconv.FormatFloat(eventLog.ExecTime, 'f', -1, 64)
 
 	remoteTotalTime := "0"
+	activityLog.Info("timestart")
+	activityLog.Info(eventLog.RemoteTotalTimeStart)
+	activityLog.Info("timeend")
+	activityLog.Info(eventLog.RemoteTotalTimeEnd)
+	diff = eventLog.RemoteTotalTimeEnd.Sub(eventLog.RemoteTotalTimeStart)
+	remoteTotalTime = strconv.FormatFloat(diff.Seconds(), 'f', -1, 64)
+
 	//remoteTotalTime = strconv.FormatFloat(eventLog.RemoteTotalTime, 'f', -1, 64)
 
 	connectTime := "0"
@@ -116,13 +157,15 @@ func eventLogToString(eventLog models.EventLog, apiConfiguration models.ApiConfi
 	preTransferTime := "0"
 	//preTransferTime = strconv.FormatFloat(eventLog.PreTransferTime, 'f', -1, 64)
 
-	t := time.Now()
+	t := time.Now().UTC()
 	logTimestamp := t.Format("02/Jan/2006:15:04:05 +0000")
 
 	httpMethodVersion := "-"
 	var httpMethodVersionBuf bytes.Buffer
 	httpMethodVersionBuf.WriteString(apiConfiguration.Endpoints[0].Method.Verb)
-	httpMethodVersionBuf.WriteString(" - HTTP/1.1")
+	httpMethodVersionBuf.WriteString(" ")
+	httpMethodVersionBuf.WriteString(GetUri(eventLog.Uri))
+	httpMethodVersionBuf.WriteString(" HTTP/1.1")
 	//httpMethodVersionBuf.WriteString(value)
 
 	httpMethodVersion = httpMethodVersionBuf.String()
@@ -196,7 +239,7 @@ func eventLogToString(eventLog models.EventLog, apiConfiguration models.ApiConfi
 	//- - - - [30/Aug/2017:10:40:16 +0000] "GET - HTTP/1.1" 0 200 "-" "-" - "unknown" "ty4zvpr9dbnssb496pq3yhhe" "-" - - 0 - 0 0 0 0 -
 	//- - - - [12/Jun/2012:21:53:03 +0000] "GET - HTTP/1.1" 0 200 "-" "-" 0_u2cbu87r6f2q3m66j6yc2uce_ ygnj8v68nqb76akfzetwb799 "-" "-" "-" 0 - 0 0 0 0 -
 
-	return fmt.Sprintf("%v %v %v %v [%v] \"%v\" %v %v \"%v\" \"%v\" %v_%v_%v \"%v\" \"%v\" \"%v\" %v %v %v %v %v %v %v",
+	return fmt.Sprintf("%v %v %v %v [%v] \\\"%v\\\" %v %v \\\"%v\\\" \\\"%v\\\" %v_%v_%v \\\"%v\\\" \\\"%v\\\" \\\"%v\\\" %v %v %v %v %v %v %v",
 		serverName, srcIpd, ident, recordType, logTimestamp,
 		httpMethodVersion, byteSize, status, referrer, userAgent,
 		requestId, developerConfiguration.ApiKey, apiConfiguration.ID, referrerDomain, proxyWorker,
@@ -223,4 +266,26 @@ func toBool(val interface{}) (bool, error) {
 	}
 
 	return b, nil
+}
+
+// BuildURI is a temporary crude URI builder
+func GetUri(uri string) string {
+
+	var buffer bytes.Buffer
+	buffer.Grow(len(uri))
+
+	addrStart := strings.Index(uri, "://")
+
+	i := addrStart + 3
+
+	for i < len(uri) {
+		if uri[i] == '/' {
+			break
+		}
+		i++
+	}
+
+	buffer.WriteString(uri[i:len(uri)])
+
+	return buffer.String()
 }

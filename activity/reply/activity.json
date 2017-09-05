@@ -13,5 +13,9 @@
     }
   ],
   "outputs": [
+    {
+      "name": "content",
+      "type": "string"
+    }
   ]
 }

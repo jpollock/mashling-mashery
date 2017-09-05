@@ -4,6 +4,7 @@ import (
 	"github.com/TIBCOSoftware/flogo-lib/core/activity"
 	"github.com/TIBCOSoftware/flogo-lib/core/data"
 	"github.com/TIBCOSoftware/flogo-lib/logger"
+	"github.com/jpollock/mashling-mashery/models"
 	"reflect"
 	"strconv"
 )
@@ -43,9 +44,7 @@ func (a *ErrorActivity) Eval(context activity.Context) (done bool, err error) {
 	*/
 
 	errorDataValue, ok := data.GetGlobalScope().GetAttr("error")
-	log.Info(errorDataValue)
 	d := errorDataValue.Value
-	log.Info(reflect.TypeOf(d))
 	errorData, ok := d.(*activity.Error)
 
 	if ok == false {
@@ -55,6 +54,18 @@ func (a *ErrorActivity) Eval(context activity.Context) (done bool, err error) {
 	replyHandler := context.FlowDetails().ReplyHandler()
 
 	//todo support replying with error
+
+	var eventLog models.EventLog
+	eventLogValue, ok := data.GetGlobalScope().GetAttr("eventLog")
+	t_eventLog := eventLogValue.Value
+	eventLog, ok = t_eventLog.(models.EventLog)
+
+	eventLog.Status = errorData.Code()
+
+	dt_eventLog, ok := data.ToTypeEnum("object")
+	if ok {
+		data.GetGlobalScope().AddAttr("eventLog", dt_eventLog, eventLog)
+	}
 
 	if replyHandler != nil {
 

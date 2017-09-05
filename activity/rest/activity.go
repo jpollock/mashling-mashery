@@ -16,7 +16,7 @@ import (
 )
 
 // log is the default package logger
-var log = logger.GetLogger("activity-tibco-rest")
+var log = logger.GetLogger("activity-mashery-rest")
 
 const (
 	methodGET    = "GET"
@@ -56,7 +56,6 @@ func (a *RESTActivity) Metadata() *activity.Metadata {
 
 // Eval implements api.Activity.Eval - Invokes a REST Operation
 func (a *RESTActivity) Eval(context activity.Context) (done bool, err error) {
-
 	method := strings.ToUpper(context.GetInput(ivMethod).(string))
 	uri := context.GetInput(ivURI).(string)
 
@@ -91,13 +90,72 @@ func (a *RESTActivity) Eval(context activity.Context) (done bool, err error) {
 		uri = uri + "?" + qp.Encode()
 	}
 
-	log.Debugf("REST Call: [%s] %s\n", method, uri)
+	log.Info("REST Call: [%s] %s\n", method, uri)
 
-	var eventLog models.EventLog
 	eventLogValue, ok := data.GetGlobalScope().GetAttr("eventLog")
-	t_eventLog := eventLogValue.Value
-	eventLog, ok = t_eventLog.(models.EventLog)
+	d := eventLogValue.Value
+	eventLog, ok := d.(*models.EventLog)
+	if ok == false {
+		log.Errorf("Error getting Event Log")
+	}
 
+	updateEventLogWithUri(eventLog, method, uri)
+
+	updateApiConfiguration(method)
+
+	if context.GetInput(ivFoundContent).(bool) == false {
+
+		var reqBody io.Reader
+
+		contentType := "application/json; charset=UTF-8"
+
+		if method == methodPOST || method == methodPUT || method == methodPATCH {
+
+			content := context.GetInput(ivContent)
+
+			contentType = getContentType(content)
+
+			if content != nil {
+				if str, ok := content.(string); ok {
+					reqBody = bytes.NewBuffer([]byte(str))
+				} else {
+					b, _ := json.Marshal(content) //todo handle error
+					reqBody = bytes.NewBuffer([]byte(b))
+				}
+			}
+		} else {
+			reqBody = nil
+		}
+
+		req, err := http.NewRequest(method, uri, reqBody)
+		if reqBody != nil {
+			req.Header.Set("Content-Type", contentType)
+		}
+
+		eventLog.RemoteTotalTimeStart = time.Now().UTC()
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			panic(err)
+		}
+		eventLog.RemoteTotalTimeEnd = time.Now().UTC()
+		context.SetOutput(ovResult, resp)
+	}
+	dt_eventLog, ok := data.ToTypeEnum("object")
+	if ok {
+		data.GetGlobalScope().AddAttr("eventLog", dt_eventLog, eventLog)
+	}
+
+	return true, nil
+}
+
+func updateEventLogWithUri(eventLog *models.EventLog, method string, uri string) {
+	eventLog.Uri = uri
+
+}
+
+func updateApiConfiguration(method string) {
 	var apiConfiguration models.ApiConfiguration
 	apiConfigValue, ok := data.GetGlobalScope().GetAttr("apiConfiguration")
 	t_apiConfiguration := apiConfigValue.Value
@@ -115,70 +173,6 @@ func (a *RESTActivity) Eval(context activity.Context) (done bool, err error) {
 
 	}
 
-	if context.GetInput(ivFoundContent).(bool) {
-		return true, nil
-	}
-
-	var reqBody io.Reader
-
-	contentType := "application/json; charset=UTF-8"
-
-	if method == methodPOST || method == methodPUT || method == methodPATCH {
-
-		content := context.GetInput(ivContent)
-
-		contentType = getContentType(content)
-
-		if content != nil {
-			if str, ok := content.(string); ok {
-				reqBody = bytes.NewBuffer([]byte(str))
-			} else {
-				b, _ := json.Marshal(content) //todo handle error
-				reqBody = bytes.NewBuffer([]byte(b))
-			}
-		}
-	} else {
-		reqBody = nil
-	}
-
-	log.Info(uri)
-	req, err := http.NewRequest(method, uri, reqBody)
-	if reqBody != nil {
-		req.Header.Set("Content-Type", contentType)
-	}
-
-	eventLog.RemoteTotalTimeStart = time.Now()
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		panic(err)
-	}
-	/*defer resp.Body.Close()
-
-	log.Info("response Status:", resp.Status)
-	respBody, _ := ioutil.ReadAll(resp.Body)
-
-	var result interface{}
-
-	d := json.NewDecoder(bytes.NewReader(respBody))
-	d.UseNumber()
-	err = d.Decode(&result)
-
-	//json.Unmarshal(respBody, &result)
-
-	log.Debug("response Body:", result)
-	*/
-	context.SetOutput(ovResult, resp)
-
-	eventLog.RemoteTotalTimeEnd = time.Now()
-
-	dt_eventLog, ok := data.ToTypeEnum("object")
-	if ok {
-		data.GetGlobalScope().AddAttr("eventLog", dt_eventLog, eventLog)
-	}
-
-	return true, nil
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////

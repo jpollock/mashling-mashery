@@ -14,26 +14,23 @@ var jsonMetadata = `{
   "homepage": "https://github.com/jpollock/mashling-mashery/tree/master/activity/test",
   "inputs":[
     {
-      "name": "message",
-      "type": "object",
-      "value": ""
+      "name": "fluentdHost",
+      "type": "string",
+      "required": true
     },
     {
-      "name": "flowInfo",
-      "type": "boolean",
-      "value": "false"
+      "name": "fluentdPort",
+      "type": "string",
+      "required": true
     },
     {
-      "name": "addToFlow",
-      "type": "boolean",
-      "value": "false"
+      "name": "fluentdTag",
+      "type": "string",
+      "required": true
     }
   ],
   "outputs": [
-    {
-      "name": "message",
-      "type": "string"
-    }
+    
   ]
 }
 `

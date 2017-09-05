@@ -48,14 +48,12 @@ func (a *DeveloperConfigurationActivity) Eval(context activity.Context) (done bo
 		activityEnabled = context.GetInput(ivActivityEnabled).(bool)
 	}
 	if activityEnabled == false {
-		log.Info("Not enabled")
 		context.SetOutput(ovError, false)
 		context.SetOutput(ovErrorData, nil)
 		return true, nil
 	}
 
 	apiConfigValue, ok := data.GetGlobalScope().GetAttr("apiConfiguration")
-	log.Info(apiConfigValue)
 	d := apiConfigValue.Value
 	apiConfiguration, ok := d.(models.ApiConfiguration)
 
@@ -77,11 +75,9 @@ func (a *DeveloperConfigurationActivity) Eval(context activity.Context) (done bo
 
 		}
 	}
-	log.Info(found)
 	if found == false {
-		log.Info("Not found")
 		context.SetOutput(ovError, true)
-		errorData := activity.NewError("test", "403", nil)
+		errorData := activity.NewError("Developer Inactive", "403", nil)
 		log.Info(errorData.Code())
 		//errorData.errorStr = "test"
 		//Error{errorStr: errorText, errorData: errorData, errorCode: code}
@@ -103,7 +99,7 @@ func (a *DeveloperConfigurationActivity) Eval(context activity.Context) (done bo
 
 func GetDeveloperConfiguration(context activity.Context, queryParams map[string]string, apiConfiguration models.ApiConfiguration) (developerConfiguration models.DeveloperConfiguration, found bool) {
 	var s models.DeveloperConfiguration
-	log.Info(apiConfiguration.Endpoints[0].ApiKeyValueLocationKey)
+
 	for key, value := range queryParams {
 
 		if key == apiConfiguration.Endpoints[0].ApiKeyValueLocationKey {

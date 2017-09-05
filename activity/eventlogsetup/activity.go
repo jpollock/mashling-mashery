@@ -28,14 +28,12 @@ func (a *EventLogActivity) Metadata() *activity.Metadata {
 
 // Eval implements activity.Activity.Eval
 func (a *EventLogActivity) Eval(context activity.Context) (done bool, err error) {
-
 	eventLog := new(models.EventLog)
 	eventLog.ServerName = "-"
 	eventLog.SrcIpd = "-"
 	eventLog.Ident = "-"
 	eventLog.RecordType = "-"
-	eventLog.LogTimestamp = "-"
-	eventLog.HttpMethodVersion = "-"
+	eventLog.HttpMethod = "-"
 	eventLog.Status = "-"
 	eventLog.Referrer = "-"
 	eventLog.UserAgent = "-"
@@ -48,10 +46,9 @@ func (a *EventLogActivity) Eval(context activity.Context) (done bool, err error)
 	eventLog.CacheHit = 0
 	eventLog.ProxyErrorCode = "-"
 	eventLog.ReferenceGuid = "-"
-	eventLog.ExecTimeStart = time.Now()
+	eventLog.ExecTimeStart = time.Now().UTC()
 
 	dt, ok := data.ToTypeEnum("object")
-	log.Info(ok)
 	if ok {
 		data.GetGlobalScope().AddAttr("eventLog", dt, eventLog)
 	}
@@ -60,10 +57,5 @@ func (a *EventLogActivity) Eval(context activity.Context) (done bool, err error)
 
 	d := eventLogValue.Value
 	eventLog2, ok := d.(*models.EventLog)
-	if ok == false {
-		log.Info(ok)
-	} else {
-		log.Info(eventLog2.RequestId)
-	}
 	return true, nil
 }

@@ -49,7 +49,7 @@ var jsonMetadata = `{
   "outputs": [
     {
       "name": "value",
-      "type": "any"
+      "type": "string"
     },
     {
       "name": "foundContent",

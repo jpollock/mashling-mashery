@@ -56,13 +56,10 @@ func (a *ApiConfigurationActivity) Eval(context activity.Context) (done bool, er
 
 	eventLogValue, ok := data.GetGlobalScope().GetAttr("eventLog")
 	d := eventLogValue.Value
-	eventLog, ok := d.(models.EventLog)
+	eventLog, ok := d.(*models.EventLog)
 	if ok == false {
 		log.Info(ok)
-	} else {
-		log.Info(eventLog.RequestId)
 	}
-
 	return true, nil
 }
 

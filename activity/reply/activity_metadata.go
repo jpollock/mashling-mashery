@@ -19,6 +19,10 @@ var jsonMetadata = `{
     }
   ],
   "outputs": [
+    {
+      "name": "content",
+      "type": "string"
+    }
   ]
 }
 `

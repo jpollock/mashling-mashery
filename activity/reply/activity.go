@@ -4,17 +4,21 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/TIBCOSoftware/flogo-lib/core/activity"
+	"github.com/TIBCOSoftware/flogo-lib/core/data"
 	"github.com/TIBCOSoftware/flogo-lib/logger"
+	"github.com/jpollock/mashling-mashery/models"
 	"io/ioutil"
 	"net/http"
 	"reflect"
+	"strconv"
 )
 
 // log is the default package logger
 var log = logger.GetLogger("activity-mashery-reply")
 
 const (
-	ivData = "data"
+	ivData    = "data"
+	ovContent = "content"
 )
 
 // ReplyActivity is an Activity that is used to reply via the trigger
@@ -36,38 +40,60 @@ func (a *ReplyActivity) Metadata() *activity.Metadata {
 
 // Eval implements api.Activity.Eval - Invokes a REST Operation
 func (a *ReplyActivity) Eval(context activity.Context) (done bool, err error) {
-	log.Info("REPLY::1")
-	code := 200
-	data := context.GetInput(ivData)
-	log.Info("REPLY::2")
-	log.Info(data)
-	log.Info(reflect.TypeOf(data))
-	//	log.Info("Code :'%d', Data: '%+v'", code, data)
-
-	log.Info("REPLY::3")
 	var result interface{}
-	resp, ok := data.(*http.Response)
-	log.Info("REPLY::4")
-	log.Info(ok)
-	if ok {
-		defer resp.Body.Close()
+	eventLogValue, ok := data.GetGlobalScope().GetAttr("eventLog")
+	t_eventLog := eventLogValue.Value
+	eventLog, ok := t_eventLog.(*models.EventLog)
 
-		log.Info("response Status:", resp.Status)
-		respBody, _ := ioutil.ReadAll(resp.Body)
+	responseData := context.GetInput(ivData)
 
-		d := json.NewDecoder(bytes.NewReader(respBody))
+	if reflect.TypeOf(responseData).Name() == "string" {
+
+		d := json.NewDecoder(bytes.NewReader([]byte(responseData.(string))))
 		d.UseNumber()
 		err = d.Decode(&result)
 
-		json.Unmarshal(respBody, &result)
-
-		log.Info("response Body:", result)
+		replyHandler := context.FlowDetails().ReplyHandler()
+		if replyHandler != nil {
+			replyHandler.Reply(200, result, nil)
+		}
 	} else {
 
+		var result interface{}
+		resp, ok := responseData.(*http.Response)
+		if ok {
+			defer resp.Body.Close()
+
+			eventLog.Status = strconv.Itoa(resp.StatusCode)
+			eventLog.Bytes = resp.ContentLength
+			respBody, _ := ioutil.ReadAll(resp.Body)
+			bytesBody := bytes.NewReader(respBody)
+			d := json.NewDecoder(bytesBody)
+			d.UseNumber()
+			err = d.Decode(&result)
+
+			//json.Unmarshal(respBody, &result)
+			//content := string(result[:])
+			context.SetOutput(ovContent, result)
+			replyHandler := context.FlowDetails().ReplyHandler()
+			if replyHandler != nil {
+				replyHandler.Reply(resp.StatusCode, result, nil)
+			}
+
+		} else {
+			errorData := activity.NewError("Server Error", "500", nil)
+			//errorData.errorStr = "test"
+			//Error{errorStr: errorText, errorData: errorData, errorCode: code}
+			dt, ok := data.ToTypeEnum("object")
+			if ok {
+				data.GetGlobalScope().AddAttr("error", dt, errorData)
+			}
+
+		}
 	}
-	replyHandler := context.FlowDetails().ReplyHandler()
-	if replyHandler != nil {
-		replyHandler.Reply(code, result, nil)
+	dt_eventLog, ok := data.ToTypeEnum("object")
+	if ok {
+		data.GetGlobalScope().AddAttr("eventLog", dt_eventLog, eventLog)
 	}
 
 	return true, nil

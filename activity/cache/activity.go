@@ -7,9 +7,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/TIBCOSoftware/flogo-lib/core/activity"
+	"github.com/TIBCOSoftware/flogo-lib/core/data"
 	"github.com/TIBCOSoftware/flogo-lib/logger"
 	"github.com/go-redis/redis"
+	"github.com/jpollock/mashling-mashery/models"
 	"net/url"
+	//"reflect"
 	"strings"
 	"time"
 )
@@ -93,7 +96,7 @@ func (a *CacheActivity) Eval(context activity.Context) (done bool, err error) {
 	})
 
 	uri := context.GetInput(ivURI).(string)
-
+	log.Info(uri)
 	containsParam := strings.Index(uri, "/:") > -1
 
 	if containsParam {
@@ -125,16 +128,23 @@ func (a *CacheActivity) Eval(context activity.Context) (done bool, err error) {
 		uri = uri + "?" + qp.Encode()
 	}
 
-	content := context.GetInput(ivContent).(string)
+	log.Info(context.GetInput(ivContent))
+	content := context.GetInput(ivContent)
+	//log.Info(json.Marshal(content))
+	b, err := json.Marshal(content)
+	log.Info(err)
+	log.Info(string(b))
+
 	if content != "" {
-		//fmt.Print(*time.Second) /
-		err := client.Set(uri, content, time.Duration(c.Endpoints[0].Cache.CacheTtlOverride)*time.Second).Err()
+		log.Info("content content")
+		err := client.Set(uri, string(b), time.Duration(c.Endpoints[0].Cache.CacheTtlOverride)*time.Second).Err()
 		if err != nil {
 			panic(err)
 		}
 		context.SetOutput(ovFoundContent, false)
 
 	} else {
+		log.Info("no content")
 		val2, err := client.Get(uri).Result()
 		if err == redis.Nil {
 			fmt.Println("key2 does not exists")
@@ -142,7 +152,9 @@ func (a *CacheActivity) Eval(context activity.Context) (done bool, err error) {
 		} else if err != nil {
 			panic(err)
 		} else {
-			content = val2
+			log.Info("key existed")
+
+			content := val2
 
 			d := json.NewDecoder(bytes.NewReader([]byte(content)))
 			d.UseNumber()
@@ -153,6 +165,20 @@ func (a *CacheActivity) Eval(context activity.Context) (done bool, err error) {
 			context.SetOutput(ovValue, result)
 
 			context.SetOutput(ovFoundContent, true)
+
+			eventLogValue, ok := data.GetGlobalScope().GetAttr("eventLog")
+			d2 := eventLogValue.Value
+			eventLog, ok := d2.(*models.EventLog)
+			if ok == false {
+				log.Info(ok)
+			} else {
+				eventLog.CacheHit = 1
+			}
+
+			dt_eventLog, ok := data.ToTypeEnum("object")
+			if ok {
+				data.GetGlobalScope().AddAttr("eventLog", dt_eventLog, eventLog)
+			}
 
 		}
 	}
