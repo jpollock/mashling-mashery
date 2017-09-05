@@ -1,4 +1,4 @@
-package test
+package logger
 
 import (
 	"github.com/TIBCOSoftware/flogo-lib/core/activity"
@@ -7,11 +7,11 @@ import (
 var jsonMetadata = `{
   "name": "mashery-log",
   "type": "flogo:activity",
-  "ref": "github.com/jpollock/mashling-mashery/activity/test",
+  "ref": "github.com/jpollock/mashling-mashery/activity/logger",
   "version": "0.0.1",
-  "title": "Log Message",
-  "description": "Simple Log Activity",
-  "homepage": "https://github.com/jpollock/mashling-mashery/tree/master/activity/test",
+  "title": "Mashery Log Message",
+  "description": "Simple Log Activity (Mashery)",
+  "homepage": "https://github.com/jpollock/mashling-mashery/tree/master/activity/logger",
   "inputs":[
     {
       "name": "fluentdHost",

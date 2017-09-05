@@ -53,9 +53,5 @@ func (a *EventLogActivity) Eval(context activity.Context) (done bool, err error)
 		data.GetGlobalScope().AddAttr("eventLog", dt, eventLog)
 	}
 
-	eventLogValue, ok := data.GetGlobalScope().GetAttr("eventLog")
-
-	d := eventLogValue.Value
-	eventLog2, ok := d.(*models.EventLog)
 	return true, nil
 }

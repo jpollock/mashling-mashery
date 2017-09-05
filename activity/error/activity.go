@@ -5,7 +5,6 @@ import (
 	"github.com/TIBCOSoftware/flogo-lib/core/data"
 	"github.com/TIBCOSoftware/flogo-lib/logger"
 	"github.com/jpollock/mashling-mashery/models"
-	"reflect"
 	"strconv"
 )
 
