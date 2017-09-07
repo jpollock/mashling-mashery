@@ -73,12 +73,10 @@ func (a *LogActivity) Eval(context activity.Context) (done bool, err error) {
 	eventLogValue, ok := data.GetGlobalScope().GetAttr("eventLog")
 	d = eventLogValue.Value
 	eventLog, ok := d.(*models.EventLog)
-
 	eventLog.ExecTimeEnd = time.Now().UTC()
 	eventLog.LogTimestamp = time.Now().UTC()
 
 	msg := eventLogToString(eventLog, apiConfiguration, developerConfiguration)
-
 	//- - - - [12/Jun/2012:21:53:03 +0000] "GET - HTTP/1.1" 0 200 "-" "-" 0_u2cbu87r6f2q3m66j6yc2uce_ ygnj8v68nqb76akfzetwb799 "-" "-" "-" 0 - 0 0 0 0 -
 
 	context.SetOutput(ovMessage, msg)
@@ -127,25 +125,16 @@ func (a *LogActivity) Eval(context activity.Context) (done bool, err error) {
 }
 
 func eventLogToString(eventLog *models.EventLog, apiConfiguration models.ApiConfiguration, developerConfiguration models.DeveloperConfiguration) string {
-	activityLog.Info(eventLog)
 	//byteSize := "0"
 	byteSize := strconv.FormatInt(eventLog.Bytes, 10)
 
 	execTime := "0"
-	activityLog.Info("timestart")
-	activityLog.Info(eventLog.ExecTimeStart)
-	activityLog.Info("timeend")
-	activityLog.Info(eventLog.ExecTimeEnd)
 
 	diff := eventLog.ExecTimeEnd.Sub(eventLog.ExecTimeStart)
 	execTime = strconv.FormatFloat(diff.Seconds(), 'f', -1, 64)
 	//execTime = strconv.FormatFloat(eventLog.ExecTime, 'f', -1, 64)
 
 	remoteTotalTime := "0"
-	activityLog.Info("timestart")
-	activityLog.Info(eventLog.RemoteTotalTimeStart)
-	activityLog.Info("timeend")
-	activityLog.Info(eventLog.RemoteTotalTimeEnd)
 	diff = eventLog.RemoteTotalTimeEnd.Sub(eventLog.RemoteTotalTimeStart)
 	remoteTotalTime = strconv.FormatFloat(diff.Seconds(), 'f', -1, 64)
 
@@ -158,9 +147,10 @@ func eventLogToString(eventLog *models.EventLog, apiConfiguration models.ApiConf
 	//preTransferTime = strconv.FormatFloat(eventLog.PreTransferTime, 'f', -1, 64)
 
 	t := time.Now().UTC()
-	logTimestamp := t.Format("02/Jan/2006:15:04:05 +0000")
+	//logTimestamp := t.Format("02/Jan/2006:15:04:05 +0000")
+	logTimestamp := t.Format("2006-01-02 15:04:05")
 
-	httpMethodVersion := "-"
+	//httpMethodVersion := "-"
 	var httpMethodVersionBuf bytes.Buffer
 	httpMethodVersionBuf.WriteString(apiConfiguration.Endpoints[0].Method.Verb)
 	httpMethodVersionBuf.WriteString(" ")
@@ -168,7 +158,7 @@ func eventLogToString(eventLog *models.EventLog, apiConfiguration models.ApiConf
 	httpMethodVersionBuf.WriteString(" HTTP/1.1")
 	//httpMethodVersionBuf.WriteString(value)
 
-	httpMethodVersion = httpMethodVersionBuf.String()
+	//httpMethodVersion = httpMethodVersionBuf.String()
 
 	serverName := eventLog.ServerName
 	if serverName == "" {
@@ -239,12 +229,17 @@ func eventLogToString(eventLog *models.EventLog, apiConfiguration models.ApiConf
 	//- - - - [30/Aug/2017:10:40:16 +0000] "GET - HTTP/1.1" 0 200 "-" "-" - "unknown" "ty4zvpr9dbnssb496pq3yhhe" "-" - - 0 - 0 0 0 0 -
 	//- - - - [12/Jun/2012:21:53:03 +0000] "GET - HTTP/1.1" 0 200 "-" "-" 0_u2cbu87r6f2q3m66j6yc2uce_ ygnj8v68nqb76akfzetwb799 "-" "-" "-" 0 - 0 0 0 0 -
 
-	return fmt.Sprintf("%v %v %v %v [%v] \\\"%v\\\" %v %v \\\"%v\\\" \\\"%v\\\" %v_%v_%v \\\"%v\\\" \\\"%v\\\" \\\"%v\\\" %v %v %v %v %v %v %v",
-		serverName, srcIpd, ident, recordType, logTimestamp,
-		httpMethodVersion, byteSize, status, referrer, userAgent,
-		requestId, developerConfiguration.ApiKey, apiConfiguration.ID, referrerDomain, proxyWorker,
+	/*return fmt.Sprintf("%v %v %v %v [%v] \\\"%v\\\" %v %v \\\"%v\\\" \\\"%v\\\" %v_%v_%v \\\"%v\\\" \\\"%v\\\" \\\"%v\\\" %v %v %v %v %v %v %v",
+	serverName, srcIpd, ident, recordType, logTimestamp,
+	httpMethodVersion, byteSize, status, referrer, userAgent,
+	requestId, developerConfiguration.ApiKey, apiConfiguration.ID, referrerDomain, proxyWorker,
+	apiMethod, eventLog.CacheHit, proxyErrorCode, execTime, remoteTotalTime,
+	connectTime, preTransferTime, referenceGuid)*/
+	return fmt.Sprintf("%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v",
+		serverName, srcIpd, ident, apiConfiguration.Endpoints[0].Method.Verb, GetUri(eventLog.Uri), "HTTP/1.1", byteSize,
+		status, referrer, userAgent, requestId, logTimestamp, developerConfiguration.ApiKey, apiConfiguration.ID, proxyWorker,
 		apiMethod, eventLog.CacheHit, proxyErrorCode, execTime, remoteTotalTime,
-		connectTime, preTransferTime, referenceGuid)
+		connectTime, preTransferTime, "", "0", "", "0.0", "", "", "", "", "", "", "", "", "")
 
 }
 func toBool(val interface{}) (bool, error) {
@@ -271,21 +266,25 @@ func toBool(val interface{}) (bool, error) {
 // BuildURI is a temporary crude URI builder
 func GetUri(uri string) string {
 
-	var buffer bytes.Buffer
-	buffer.Grow(len(uri))
+	if uri != "" {
+		var buffer bytes.Buffer
+		buffer.Grow(len(uri))
 
-	addrStart := strings.Index(uri, "://")
+		addrStart := strings.Index(uri, "://")
 
-	i := addrStart + 3
+		i := addrStart + 3
 
-	for i < len(uri) {
-		if uri[i] == '/' {
-			break
+		for i < len(uri) {
+			if uri[i] == '/' {
+				break
+			}
+			i++
 		}
-		i++
+
+		buffer.WriteString(uri[i:len(uri)])
+
+		return buffer.String()
+
 	}
-
-	buffer.WriteString(uri[i:len(uri)])
-
-	return buffer.String()
+	return "-"
 }

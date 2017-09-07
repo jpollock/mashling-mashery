@@ -90,8 +90,6 @@ func (a *RESTActivity) Eval(context activity.Context) (done bool, err error) {
 		uri = uri + "?" + qp.Encode()
 	}
 
-	log.Info("REST Call: [%s] %s\n", method, uri)
-
 	eventLogValue, ok := data.GetGlobalScope().GetAttr("eventLog")
 	d := eventLogValue.Value
 	eventLog, ok := d.(*models.EventLog)

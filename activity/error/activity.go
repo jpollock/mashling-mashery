@@ -54,10 +54,9 @@ func (a *ErrorActivity) Eval(context activity.Context) (done bool, err error) {
 
 	//todo support replying with error
 
-	var eventLog models.EventLog
 	eventLogValue, ok := data.GetGlobalScope().GetAttr("eventLog")
 	t_eventLog := eventLogValue.Value
-	eventLog, ok = t_eventLog.(models.EventLog)
+	eventLog, ok := t_eventLog.(*models.EventLog)
 
 	eventLog.Status = errorData.Code()
 
