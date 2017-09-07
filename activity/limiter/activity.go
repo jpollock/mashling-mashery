@@ -2,8 +2,10 @@ package limiter
 
 import (
 	"github.com/TIBCOSoftware/flogo-lib/core/activity"
+	"github.com/TIBCOSoftware/flogo-lib/core/data"
 	"github.com/TIBCOSoftware/flogo-lib/logger"
 	"github.com/go-redis/redis"
+	"github.com/jpollock/mashling-mashery/models"
 	"strconv"
 )
 
@@ -50,10 +52,28 @@ func (a *LimiterActivity) Eval(context activity.Context) (done bool, err error) 
 		return true, nil
 	}
 
+	apiConfigValue, ok := data.GetGlobalScope().GetAttr("apiConfiguration")
+	d := apiConfigValue.Value
+	apiConfiguration, ok := d.(models.ApiConfiguration)
+
+	if ok == false {
+		log.Info(ok)
+	}
+	limit := apiConfiguration.QpsLimitOverall
 	count, _ := getIntValue(context, ivCount, 0)
-	limit, _ := getIntValue(context, ivLimit, 0)
+	//limit, _ := getIntValue(context, ivLimit, 0)
 	if count > limit {
 		context.SetOutput(ovLimited, true)
+
+		errorData := activity.NewError("Service Over Limit", "403", nil)
+		//errorData.errorStr = "test"
+		//Error{errorStr: errorText, errorData: errorData, errorCode: code}
+		dt, ok := data.ToTypeEnum("object")
+		if ok {
+			log.Info("Adding error to global")
+			data.GetGlobalScope().AddAttr("error", dt, errorData)
+		}
+
 	} else {
 		context.SetOutput(ovLimited, false)
 	}
