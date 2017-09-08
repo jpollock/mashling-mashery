@@ -62,7 +62,7 @@ func (a *LimiterActivity) Eval(context activity.Context) (done bool, err error) 
 	limit := apiConfiguration.QpsLimitOverall
 	count, _ := getIntValue(context, ivCount, 0)
 	//limit, _ := getIntValue(context, ivLimit, 0)
-	if count > limit {
+	if limit > 0 && count > limit {
 		context.SetOutput(ovLimited, true)
 
 		errorData := activity.NewError("Service Over Limit", "403", nil)
